@@ -194,6 +194,7 @@ export const SandboxBrowserSchema = z
     autoStart: z.boolean().optional(),
     autoStartTimeoutMs: z.number().int().positive().optional(),
     binds: z.array(z.string()).optional(),
+    dockerHost: z.string().optional(),
   })
   .strict()
   .optional();

@@ -29,13 +29,22 @@ export async function startBrowserBridgeServer(params: {
   port?: number;
   authToken?: string;
   authPassword?: string;
+  /**
+   * Host address to advertise in baseUrl. When binding to 0.0.0.0 for container
+   * access, this should be set to the Docker bridge gateway address so containers
+   * can reach the server.
+   *
+   * If not provided, defaults to `host` (or 127.0.0.1).
+   */
+  advertiseHost?: string;
   onEnsureAttachTarget?: (profile: ProfileContext["profile"]) => Promise<void>;
 }): Promise<BrowserBridge> {
   const host = params.host ?? "127.0.0.1";
-  if (!isLoopbackHost(host)) {
+  if (host !== "0.0.0.0" && !isLoopbackHost(host)) {
     throw new Error(`bridge server must bind to loopback host (got ${host})`);
   }
   const port = params.port ?? 0;
+  const advertiseHost = params.advertiseHost?.trim() || host;
 
   const app = express();
   installBrowserCommonMiddleware(app);
@@ -73,7 +82,7 @@ export async function startBrowserBridgeServer(params: {
 
   setBridgeAuthForPort(resolvedPort, { token: authToken, password: authPassword });
 
-  const baseUrl = `http://${host}:${resolvedPort}`;
+  const baseUrl = `http://${advertiseHost}:${resolvedPort}`;
   return { server, port: resolvedPort, baseUrl, state };
 }
 
