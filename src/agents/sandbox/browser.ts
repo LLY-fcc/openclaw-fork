@@ -1,4 +1,5 @@
 import crypto from "node:crypto";
+import type { SandboxBrowserContext, SandboxConfig } from "./types.js";
 import { startBrowserBridgeServer, stopBrowserBridgeServer } from "../../browser/bridge-server.js";
 import { type ResolvedBrowserConfig, resolveProfile } from "../../browser/config.js";
 import {
@@ -15,6 +16,7 @@ import {
   SANDBOX_AGENT_WORKSPACE_MOUNT,
   SANDBOX_BROWSER_SECURITY_HASH_EPOCH,
 } from "./constants.js";
+import { resolveDockerHostAddress } from "./docker-host.js";
 import {
   buildSandboxCreateArgs,
   dockerContainerState,
@@ -35,7 +37,6 @@ import {
 import { readBrowserRegistry, updateBrowserRegistry } from "./registry.js";
 import { resolveSandboxAgentId, slugifySessionKey } from "./shared.js";
 import { isToolAllowed } from "./tool-policy.js";
-import type { SandboxBrowserContext, SandboxConfig } from "./types.js";
 
 const HOT_BROWSER_WINDOW_MS = 5 * 60 * 1000;
 const CDP_SOURCE_RANGE_ENV_KEY = "OPENCLAW_BROWSER_CDP_SOURCE_RANGE";
@@ -353,6 +354,16 @@ export async function ensureSandboxBrowser(params: {
       }),
       authToken: desiredAuthToken,
       authPassword: desiredAuthPassword,
+      // Bind to all interfaces so containers can reach the bridge.
+      // Advertise Docker-reachable host address in baseUrl.
+      //
+      // Security considerations:
+      // - Ephemeral port (0) reduces scan attack surface
+      // - Short-lived (sandbox session duration)
+      // - Docker bridge network typically not externally routed
+      // - Consider adding authToken in future for defense-in-depth
+      host: "0.0.0.0",
+      advertiseHost: resolveDockerHostAddress(params.cfg.browser.dockerHost),
       onEnsureAttachTarget,
       resolveSandboxNoVncToken: consumeNoVncObserverToken,
     });
