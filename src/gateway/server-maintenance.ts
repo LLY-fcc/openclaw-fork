@@ -39,6 +39,7 @@ export function startGatewayMaintenanceTimers(params: {
   agentRunSeq: Map<string, number>;
   nodeSendToSession: (sessionKey: string, event: string, payload: unknown) => void;
   mediaCleanupTtlMs?: number;
+  healthCheckIntervalMs?: number;
 }): {
   tickInterval: ReturnType<typeof setInterval>;
   healthInterval: ReturnType<typeof setInterval>;
@@ -67,7 +68,7 @@ export function startGatewayMaintenanceTimers(params: {
     void params
       .refreshGatewayHealthSnapshot({ probe: true })
       .catch((err) => params.logHealth.error(`refresh failed: ${formatError(err)}`));
-  }, HEALTH_REFRESH_INTERVAL_MS);
+  }, params.healthCheckIntervalMs ?? HEALTH_REFRESH_INTERVAL_MS);
 
   // Prime cache so first client gets a snapshot without waiting.
   void params

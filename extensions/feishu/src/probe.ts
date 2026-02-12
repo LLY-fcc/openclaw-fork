@@ -1,6 +1,6 @@
+import type { FeishuProbeResult } from "./types.js";
 import { raceWithTimeoutAndAbort } from "./async.js";
 import { createFeishuClient, type FeishuClientCredentials } from "./client.js";
-import type { FeishuProbeResult } from "./types.js";
 
 /** Cache probe results to reduce repeated health-check calls.
  * Gateway health checks call probeFeishu() every minute; without caching this
@@ -64,13 +64,31 @@ export async function probeFeishu(
   // accounts sharing the same appId (e.g. after secret rotation) don't
   // pollute each other's cache entry.
   const cacheKey = creds.accountId ?? `${creds.appId}:${creds.appSecret.slice(0, 8)}`;
-  const cached = probeCache.get(cacheKey);
-  if (cached && cached.expiresAt > Date.now()) {
-    return cached.result;
+  const cachedEntry = probeCache.get(cacheKey);
+  if (cachedEntry && cachedEntry.expiresAt > Date.now()) {
+    return cachedEntry.result;
   }
 
   try {
     const client = createFeishuClient(creds);
+
+    // If we have cached bot info, try to validate connectivity by getting a token.
+    // Tenant access token refresh is quota-exempt on Feishu.
+    if (cachedEntry?.result.ok) {
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- SDK internal access
+        await (client as any).tokenManager.getTenantAccessToken();
+        return {
+          ok: true,
+          appId: creds.appId,
+          botName: cachedEntry.result.botName,
+          botOpenId: cachedEntry.result.botOpenId,
+        };
+      } catch (tokenErr) {
+        // Fall through to full probe if token check fails
+      }
+    }
+
     // Use bot/v3/info API to get bot information
     // eslint-disable-next-line @typescript-eslint/no-explicit-any -- SDK generic request method
     const responseResult = await raceWithTimeoutAndAbort<FeishuBotInfoResponse>(
