@@ -438,6 +438,7 @@ export const OpenClawSchema = z
       .object({
         port: z.number().int().positive().optional(),
         mode: z.union([z.literal("local"), z.literal("remote")]).optional(),
+        healthCheckIntervalMs: z.number().int().positive().optional(),
         bind: z
           .union([
             z.literal("auto"),

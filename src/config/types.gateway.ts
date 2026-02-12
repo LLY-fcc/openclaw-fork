@@ -304,6 +304,8 @@ export type GatewayConfig = {
    * When set to "local", the CLI may start the gateway locally.
    */
   mode?: "local" | "remote";
+  /** Gateway health check interval in milliseconds. */
+  healthCheckIntervalMs?: number;
   /**
    * Bind address policy for the Gateway WebSocket + Control UI HTTP server.
    * - auto: Loopback (127.0.0.1) if available, else 0.0.0.0 (fallback to all interfaces)
