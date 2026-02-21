@@ -1,11 +1,11 @@
 import fs from "node:fs";
 import type { OpenClawConfig } from "../config/config.js";
+import type { PluginConfigUiHint, PluginDiagnostic, PluginKind, PluginOrigin } from "./types.js";
 import { resolveUserPath } from "../utils.js";
 import { normalizePluginsConfig, type NormalizedPluginsConfig } from "./config-state.js";
 import { discoverOpenClawPlugins, type PluginCandidate } from "./discovery.js";
 import { loadPluginManifest, type PluginManifest } from "./manifest.js";
 import { safeRealpathSync } from "./path-safety.js";
-import type { PluginConfigUiHint, PluginDiagnostic, PluginKind, PluginOrigin } from "./types.js";
 
 type SeenIdEntry = {
   candidate: PluginCandidate;
@@ -216,11 +216,15 @@ export function loadPluginManifestRegistry(params: {
         }
         continue;
       }
+
+      // Find the first occurrence to provide better context
+      const firstOccurrence = records[existing.recordIndex];
+      const firstSource = firstOccurrence?.source ?? "unknown";
       diagnostics.push({
         level: "warn",
         pluginId: manifest.id,
         source: candidate.source,
-        message: `duplicate plugin id detected; later plugin may be overridden (${candidate.source})`,
+        message: `duplicate plugin id "${manifest.id}" detected; first found at ${firstSource}, this instance at ${candidate.source} may be ignored`,
       });
     } else {
       seenIds.set(manifest.id, { candidate, recordIndex: records.length });
