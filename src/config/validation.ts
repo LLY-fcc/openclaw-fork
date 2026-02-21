@@ -1,4 +1,5 @@
 import path from "node:path";
+import type { OpenClawConfig, ConfigValidationIssue } from "./types.js";
 import { resolveAgentWorkspaceDir, resolveDefaultAgentId } from "../agents/agent-scope.js";
 import { CHANNEL_IDS, normalizeChatChannelId } from "../channels/registry.js";
 import {
@@ -21,7 +22,6 @@ import { findDuplicateAgentDirs, formatDuplicateAgentDirError } from "./agent-di
 import { appendAllowedValuesHint, summarizeAllowedValues } from "./allowed-values.js";
 import { applyAgentDefaults, applyModelDefaults, applySessionDefaults } from "./defaults.js";
 import { findLegacyConfigIssues } from "./legacy.js";
-import type { OpenClawConfig, ConfigValidationIssue } from "./types.js";
 import { OpenClawSchema } from "./zod-schema.js";
 
 const LEGACY_REMOVED_PLUGIN_IDS = new Set(["google-antigravity-auth"]);
@@ -341,16 +341,17 @@ function validateConfigObjectWithPluginsBase(
       return registryInfo;
     }
 
-    const workspaceDir = resolveAgentWorkspaceDir(config, resolveDefaultAgentId(config));
     const registry = loadPluginManifestRegistry({
-      config,
-      workspaceDir: workspaceDir ?? undefined,
+      config: base.config,
     });
 
     for (const diag of registry.diagnostics) {
       let path = diag.pluginId ? `plugins.entries.${diag.pluginId}` : "plugins";
       if (!diag.pluginId && diag.message.includes("plugin path not found")) {
         path = "plugins.load.paths";
+      } else if (diag.message.includes("duplicate plugin id")) {
+        // Duplicate detection is a discovery-level issue, not an entries config issue
+        path = diag.source ? `plugins (${diag.source})` : "plugins";
       }
       const pluginLabel = diag.pluginId ? `plugin ${diag.pluginId}` : "plugin";
       const message = `${pluginLabel}: ${diag.message}`;
