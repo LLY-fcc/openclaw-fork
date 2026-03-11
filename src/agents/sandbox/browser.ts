@@ -1,5 +1,4 @@
 import crypto from "node:crypto";
-import type { SandboxBrowserContext, SandboxConfig } from "./types.js";
 import { startBrowserBridgeServer, stopBrowserBridgeServer } from "../../browser/bridge-server.js";
 import { type ResolvedBrowserConfig, resolveProfile } from "../../browser/config.js";
 import {
@@ -13,7 +12,7 @@ import { BROWSER_BRIDGES } from "./browser-bridges.js";
 import { computeSandboxBrowserConfigHash } from "./config-hash.js";
 import { resolveSandboxBrowserDockerCreateConfig } from "./config.js";
 import { DEFAULT_SANDBOX_BROWSER_IMAGE, SANDBOX_BROWSER_SECURITY_HASH_EPOCH } from "./constants.js";
-import { resolveDockerHostAddress } from "./docker-host.js";
+import { resolveContainerHostAddress } from "./docker-host.js";
 import {
   buildSandboxCreateArgs,
   dockerContainerState,
@@ -33,6 +32,7 @@ import {
 import { readBrowserRegistry, updateBrowserRegistry } from "./registry.js";
 import { resolveSandboxAgentId, slugifySessionKey } from "./shared.js";
 import { isToolAllowed } from "./tool-policy.js";
+import type { SandboxBrowserContext, SandboxConfig } from "./types.js";
 import { validateNetworkMode } from "./validate-sandbox-security.js";
 import { appendWorkspaceMountArgs } from "./workspace-mounts.js";
 
@@ -366,7 +366,7 @@ export async function ensureSandboxBrowser(params: {
       // - Docker bridge network typically not externally routed
       // - Consider adding authToken in future for defense-in-depth
       host: "0.0.0.0",
-      advertiseHost: resolveDockerHostAddress(params.cfg.browser.dockerHost),
+      advertiseHost: resolveContainerHostAddress(params.cfg.browser.containerHostAddress),
       onEnsureAttachTarget,
       resolveSandboxNoVncToken: consumeNoVncObserverToken,
     });

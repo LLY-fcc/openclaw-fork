@@ -157,7 +157,7 @@ export function resolveSandboxBrowserConfig(params: {
       globalBrowser?.autoStartTimeoutMs ??
       DEFAULT_SANDBOX_BROWSER_AUTOSTART_TIMEOUT_MS,
     binds: bindsConfigured ? binds : undefined,
-    dockerHost: agentBrowser?.dockerHost ?? globalBrowser?.dockerHost,
+    containerHostAddress: agentBrowser?.containerHostAddress ?? globalBrowser?.containerHostAddress,
   };
 }
 

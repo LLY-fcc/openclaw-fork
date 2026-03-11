@@ -45,15 +45,15 @@ export type SandboxBrowserConfig = {
   autoStartTimeoutMs: number;
   binds?: string[];
   /**
-   * Host address that Docker containers use to reach the host machine.
+   * Host address that containers use to reach the host machine.
    * If not set, auto-detected based on platform:
    * - macOS/Windows: host.docker.internal
    * - Linux: 172.17.0.1
    *
-   * Override with OPENCLAW_DOCKER_HOST env var for non-standard setups
+   * Override this config for non-standard setups
    * (rootless Docker, Podman, custom bridge networks, etc.).
    */
-  dockerHost?: string;
+  containerHostAddress?: string;
 };
 
 export type SandboxPruneConfig = {
