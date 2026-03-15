@@ -45,7 +45,27 @@ function withLoopbackBrowserAuthImpl(
   if (headers.has("authorization") || headers.has("x-openclaw-password")) {
     return { ...init, headers };
   }
-  if (!isLoopbackHttpUrl(url)) {
+
+  // Check if auth should be added
+  let shouldAddAuth = false;
+
+  // 1. Check if it's a loopback address
+  if (isLoopbackHttpUrl(url)) {
+    shouldAddAuth = true;
+  }
+  // 2. Check if it's a Docker bridge network address
+  else {
+    try {
+      const hostname = new URL(url).hostname;
+      if (hostname === "172.17.0.1" || hostname === "host.docker.internal") {
+        shouldAddAuth = true;
+      }
+    } catch {
+      // ignore
+    }
+  }
+
+  if (!shouldAddAuth) {
     return { ...init, headers };
   }
 

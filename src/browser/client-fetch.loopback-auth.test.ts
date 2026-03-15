@@ -248,4 +248,26 @@ describe("fetchBrowserJson loopback auth", () => {
       },
     );
   });
+
+  it("adds bearer auth for Docker bridge network address (172.17.0.1)", async () => {
+    const fetchMock = stubJsonFetchOk();
+
+    const res = await fetchBrowserJson<{ ok: boolean }>("http://172.17.0.1:18888/");
+    expect(res.ok).toBe(true);
+
+    const init = fetchMock.mock.calls[0]?.[1];
+    const headers = new Headers(init?.headers);
+    expect(headers.get("authorization")).toBe("Bearer loopback-token");
+  });
+
+  it("adds bearer auth for Docker Desktop host address (host.docker.internal)", async () => {
+    const fetchMock = stubJsonFetchOk();
+
+    const res = await fetchBrowserJson<{ ok: boolean }>("http://host.docker.internal:18888/");
+    expect(res.ok).toBe(true);
+
+    const init = fetchMock.mock.calls[0]?.[1];
+    const headers = new Headers(init?.headers);
+    expect(headers.get("authorization")).toBe("Bearer loopback-token");
+  });
 });
