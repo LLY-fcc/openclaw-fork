@@ -1,3 +1,4 @@
+import type { SsrFPolicy } from "../../infra/net/ssrf.js";
 import type { SandboxBackendHandle, SandboxBackendId } from "./backend.js";
 import type { SandboxFsBridge } from "./fs-bridge.js";
 import type { SandboxDockerConfig } from "./types.docker.js";
@@ -44,16 +45,8 @@ export type SandboxBrowserConfig = {
   autoStart: boolean;
   autoStartTimeoutMs: number;
   binds?: string[];
-  /**
-   * Host address that containers use to reach the host machine.
-   * If not set, auto-detected based on platform:
-   * - macOS/Windows: host.docker.internal
-   * - Linux: 172.17.0.1
-   *
-   * Override this config for non-standard setups
-   * (rootless Docker, Podman, custom bridge networks, etc.).
-   */
   containerHostAddress?: string;
+  ssrfPolicy?: SsrFPolicy;
 };
 
 export type SandboxPruneConfig = {

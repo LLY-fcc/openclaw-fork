@@ -1,6 +1,8 @@
+import { resolveBrowserSsrFPolicy } from "../../browser/config.js";
 import type { OpenClawConfig } from "../../config/config.js";
 import type { SandboxSshSettings } from "../../config/types.sandbox.js";
 import { normalizeSecretInputString } from "../../config/types.secrets.js";
+import type { SsrFPolicy } from "../../infra/net/ssrf.js";
 import { resolveAgentConfig } from "../agent-scope.js";
 import {
   DEFAULT_SANDBOX_BROWSER_AUTOSTART_TIMEOUT_MS,
@@ -129,11 +131,11 @@ export function resolveSandboxBrowserConfig(params: {
   scope: SandboxScope;
   globalBrowser?: Partial<SandboxBrowserConfig>;
   agentBrowser?: Partial<SandboxBrowserConfig>;
+  ssrfPolicy?: SsrFPolicy;
 }): SandboxBrowserConfig {
   const agentBrowser = params.scope === "shared" ? undefined : params.agentBrowser;
   const globalBrowser = params.globalBrowser;
   const binds = [...(globalBrowser?.binds ?? []), ...(agentBrowser?.binds ?? [])];
-  // Treat `binds: []` as an explicit override, so it can disable `docker.binds` for the browser container.
   const bindsConfigured = globalBrowser?.binds !== undefined || agentBrowser?.binds !== undefined;
   return {
     enabled: agentBrowser?.enabled ?? globalBrowser?.enabled ?? false,
@@ -158,6 +160,7 @@ export function resolveSandboxBrowserConfig(params: {
       DEFAULT_SANDBOX_BROWSER_AUTOSTART_TIMEOUT_MS,
     binds: bindsConfigured ? binds : undefined,
     containerHostAddress: agentBrowser?.containerHostAddress ?? globalBrowser?.containerHostAddress,
+    ssrfPolicy: params.ssrfPolicy,
   };
 }
 
@@ -242,6 +245,8 @@ export function resolveSandboxConfigForAgent(
 
   const toolPolicy = resolveSandboxToolPolicyForAgent(cfg, agentId);
 
+  const ssrfPolicy = resolveBrowserSsrFPolicy(cfg?.browser);
+
   return {
     mode: agentSandbox?.mode ?? agent?.mode ?? "off",
     backend: agentSandbox?.backend?.trim() || agent?.backend?.trim() || "docker",
@@ -263,6 +268,7 @@ export function resolveSandboxConfigForAgent(
       scope,
       globalBrowser: agent?.browser,
       agentBrowser: agentSandbox?.browser,
+      ssrfPolicy,
     }),
     tools: {
       allow: toolPolicy.allow,
