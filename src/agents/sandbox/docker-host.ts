@@ -1,11 +1,12 @@
 import os from "node:os";
 
 /**
- * Resolves the host address that containers can use to reach the host machine.
+ * Resolves the host address that Docker containers can use to reach the host machine.
  *
  * Precedence:
- * 1. Config file value (persistent user configuration)
- * 2. Platform auto-detection (default behavior)
+ * 1. OPENCLAW_DOCKER_HOST env var (for CI/CD, temporary overrides)
+ * 2. Config file value (persistent user configuration)
+ * 3. Platform auto-detection (default behavior)
  *
  * Common values for non-standard setups:
  * - Rootless Docker: 10.0.2.2
@@ -13,13 +14,19 @@ import os from "node:os";
  * - Colima: host.lima.internal
  * - Custom bridge: your bridge gateway IP
  */
-export function resolveContainerHostAddress(configValue?: string): string {
-  // 1. Config file value (persistent configuration)
+export function resolveDockerHostAddress(configValue?: string): string {
+  // 1. Environment variable has highest priority (CI/CD, temporary debugging)
+  const envOverride = process.env.OPENCLAW_DOCKER_HOST?.trim();
+  if (envOverride) {
+    return normalizeHostAddress(envOverride);
+  }
+
+  // 2. Config file value (persistent configuration)
   if (configValue?.trim()) {
     return normalizeHostAddress(configValue);
   }
 
-  // 2. Platform auto-detection (default behavior)
+  // 3. Platform auto-detection (default behavior)
   const platform = os.platform();
   if (platform === "darwin" || platform === "win32") {
     // Docker Desktop provides host.docker.internal
@@ -27,7 +34,7 @@ export function resolveContainerHostAddress(configValue?: string): string {
   }
 
   // Linux: Default Docker bridge gateway.
-  // Override with config for:
+  // Override with OPENCLAW_DOCKER_HOST or config for:
   // - Rootless Docker (typically 10.0.2.2)
   // - Custom bridge networks
   // - Podman (typically 10.0.2.2)

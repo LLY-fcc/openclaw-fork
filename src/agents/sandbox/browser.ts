@@ -13,7 +13,7 @@ import { BROWSER_BRIDGES } from "./browser-bridges.js";
 import { computeSandboxBrowserConfigHash } from "./config-hash.js";
 import { resolveSandboxBrowserDockerCreateConfig } from "./config.js";
 import { DEFAULT_SANDBOX_BROWSER_IMAGE, SANDBOX_BROWSER_SECURITY_HASH_EPOCH } from "./constants.js";
-import { resolveContainerHostAddress } from "./docker-host.js";
+import { resolveDockerHostAddress } from "./docker-host.js";
 import {
   buildSandboxCreateArgs,
   dockerContainerState,
@@ -370,7 +370,7 @@ export async function ensureSandboxBrowser(params: {
       // - Docker bridge network typically not externally routed
       // - Consider adding authToken in future for defense-in-depth
       host: "0.0.0.0",
-      advertiseHost: resolveContainerHostAddress(params.cfg.browser.containerHostAddress),
+      advertiseHost: resolveDockerHostAddress(params.cfg.browser.dockerHost),
       onEnsureAttachTarget,
       resolveSandboxNoVncToken: consumeNoVncObserverToken,
     });
